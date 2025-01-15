@@ -32,7 +32,7 @@
         },
         "fetchData": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",
-          "s3Key": "amplify-builds/fetchData-314b5842544b78445856-build.zip",
+          "s3Key": "amplify-builds/fetchData-3435356d4a6f32316170-build.zip",
           "secretsPathAmplifyAppId": "d12tjfcvziujwh"
         }
       },

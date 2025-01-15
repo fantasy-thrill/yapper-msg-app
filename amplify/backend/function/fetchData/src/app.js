@@ -34,25 +34,33 @@ require("dotenv").config()
 const newClient = new SSMClient();
 
 const command = new GetParametersCommand({
-  Names: ["CONNECTION_STRING", "DB_NAME"].map(
+  Names: ["CONNECTION_STRING", "DB_NAME", "DB_USER_COLLECTION"].map(
     (secretName) => process.env[secretName]
   ),
   WithDecryption: true,
 });
 
+let mongoURI = ""
+let dbName = ""
+let db;
+
 newClient
   .send(command)
-  .then((response) => {
-    const { Parameters } = response;
-    console.log("Got the parameters")
-    console.log(Parameters);
-  })
-  .catch((error) => {
-    console.error("Something went wrong", error);
-  });
+  .then(response => {
+    console.log("Secrets retrieved successfully:", response.InvalidParameters)
+    mongoURI = response.InvalidParameters[0]
+    dbName = response.InvalidParameters[1]
 
-const mongoURI = process.env.CONNECTION_STRING
-const dbName = process.env.DB_NAME
+    const client = new MongoClient(mongoURI)
+    client.connect()
+    console.log("Connected to MongoDB Atlas")
+    db = client.db(dbName)
+  })
+  .catch(error => {
+    console.error("Error retrieving secrets:", error)
+  })
+
+console.log(mongoURI)
 
 // declare a new express app
 const app = express()
@@ -66,12 +74,6 @@ app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Headers", "*")
   next()
 });
-
-const client = new MongoClient(mongoURI);
-client.connect()
-console.log("Connected to MongoDB Atlas")
-
-const db = client.db(dbName)
 
 /**********************
  * Example get method *
