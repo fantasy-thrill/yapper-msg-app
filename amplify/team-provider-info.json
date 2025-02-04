@@ -10,8 +10,7 @@
       "StackName": "amplify-yappermsgapp-dev-5071b",
       "StackId": "arn:aws:cloudformation:us-east-2:203918865206:stack/amplify-yappermsgapp-dev-5071b/e7d4f9e0-cdf9-11ef-929b-06cf12f9b077",
       "AmplifyAppId": "d12tjfcvziujwh",
-      "APIGatewayAuthURL": "https://s3.amazonaws.com/amplify-yappermsgapp-dev-5071b-deployment/amplify-cfn-templates/api/APIGatewayAuthStack.json",
-      "PermissionsBoundaryPolicyArn": "arn:aws:iam::aws:policy/AdministratorAccess"
+      "APIGatewayAuthURL": "https://s3.amazonaws.com/amplify-yappermsgapp-dev-5071b-deployment/amplify-cfn-templates/api/APIGatewayAuthStack.json"
     },
     "categories": {
       "auth": {
@@ -20,7 +19,8 @@
       "function": {
         "createAccount": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",
-          "s3Key": "amplify-builds/createAccount-7761524b65465a615a30-build.zip"
+          "s3Key": "amplify-builds/createAccount-4d30345970717557526b-build.zip",
+          "secretsPathAmplifyAppId": "d12tjfcvziujwh"
         },
         "userLogin": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",
@@ -32,8 +32,7 @@
         },
         "fetchData": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",
-          "s3Key": "amplify-builds/fetchData-3435356d4a6f32316170-build.zip",
-          "secretsPathAmplifyAppId": "d12tjfcvziujwh"
+          "s3Key": "amplify-builds/fetchData-477554674e6e4a543848-build.zip"
         }
       },
       "api": {

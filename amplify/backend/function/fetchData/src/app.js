@@ -1,18 +1,4 @@
 /*
-Use the following code to retrieve configured secrets from SSM:
-
-;
-
-const { Parameters } = new aws.SSM()
-  .getParameters({
-    Names: ["CONNECTION_STRING","DB_NAME","DB_USER_COLLECTION"].map(secretName => process.env[secretName]),
-    WithDecryption: true,
-  })
-  .promise();
-
-Parameters will be of the form { Name: 'secretName', Value: 'secretValue', ... }[]
-*/
-/*
 Copyright 2017 - 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
     http://aws.amazon.com/apache2.0/
@@ -21,48 +7,12 @@ See the License for the specific language governing permissions and limitations 
 */
 
 
-
-const express = require('express')
-const bodyParser = require('body-parser')
-const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware')
-const { MongoClient } = require("mongodb")
-const { SSMClient, GetParametersCommand } = require("@aws-sdk/client-ssm")
+const express = require("express")
+const bodyParser = require("body-parser")
+const awsServerlessExpressMiddleware = require("aws-serverless-express/middleware")
 // const cors = require("cors")
-// const aws = require('aws-sdk')
-require("dotenv").config()
+const aws = require("aws-sdk")
 
-const newClient = new SSMClient();
-
-const command = new GetParametersCommand({
-  Names: ["CONNECTION_STRING", "DB_NAME", "DB_USER_COLLECTION"].map(
-    (secretName) => process.env[secretName]
-  ),
-  WithDecryption: true,
-});
-
-let mongoURI = ""
-let dbName = ""
-let db;
-
-newClient
-  .send(command)
-  .then(response => {
-    console.log("Secrets retrieved successfully:", response.InvalidParameters)
-    mongoURI = response.InvalidParameters[0]
-    dbName = response.InvalidParameters[1]
-
-    const client = new MongoClient(mongoURI)
-    client.connect()
-    console.log("Connected to MongoDB Atlas")
-    db = client.db(dbName)
-  })
-  .catch(error => {
-    console.error("Error retrieving secrets:", error)
-  })
-
-console.log(mongoURI)
-
-// declare a new express app
 const app = express()
 app.use(bodyParser.json())
 app.use(awsServerlessExpressMiddleware.eventContext())
@@ -75,40 +25,49 @@ app.use(function(req, res, next) {
   next()
 });
 
+const dynamodb = new aws.DynamoDB.DocumentClient()
+
+
 /**********************
  * Example get method *
  **********************/
 
-app.get('/data/:col', function(req, res) {
-  const collections = {
-    "users": process.env.DB_USER_COLLECTION,
-    "test": process.env.DB_TEST_COLLECTION,
-    "password-resets": process.env.PASSWORD_RESETS
+app.get("/data/:col", async function(req, res) {
+  let tables = {
+    "users": "Users",
+    "test-users": "TestUsers",
+    "password-reset": "PasswordResetRequests"
+  }
+
+  const params = {
+    TableName: ""
+  }
+
+  for (const tableName in tables) {
+    if (req.params.col === tableName) params.TableName = tables[tableName]
   }
 
   try {
-    let collectionName;
-    for (const param in collections) {
-      if (req.params.col === param) collectionName = collections[param]
-    }
+    const data = await dynamodb.scan(params).promise()
 
-    const result = db
-      .collection(collectionName)
-      .find()
-      .toArray()
-    
-    res.json(result)
-    res.json({ success: 'get call succeed!', url: req.url })
+    console.log("Data retrieved successfully!\n", data.Items)
+    res.status(200).json({
+      statusCode: 200,
+      body: JSON.stringify({
+        message: "Items fetched successfully",
+        items: data.Items
+      })
+    })
 
   } catch (error) {
-    console.error("Error executing query: ", error)
+    console.error("Error fetching data: ", error)
     res.status(500).json({ error: "Internal server error" })
   }
 });
 
-app.listen(3000, function() {
-    console.log("App started")
-});
+app.listen(3000, function () {
+  console.log("App started")
+})
 
 // Export the app object. When executing the application local this does nothing. However,
 // to port it to AWS Lambda we will create a wrapper around that will load the app from

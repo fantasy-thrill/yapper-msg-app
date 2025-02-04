@@ -6,14 +6,10 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.726.0",
+    "aws-sdk": "^2.1692.0",
     "aws-serverless-express": "^3.3.5",
-    "bcrypt": "^5.1.1",
     "body-parser": "^1.17.1",
-    "dotenv": "^16.4.7",
-    "express": "^4.15.2",
-    "mongodb": "^6.12.0",
-    "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.9.16"
+    "express": "^4.15.2"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.92"

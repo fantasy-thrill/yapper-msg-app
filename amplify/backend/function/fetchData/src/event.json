@@ -1,11 +1,12 @@
 {
   "httpMethod": "GET",
-  "path": "/data/:col",
-  "queryStringParameters": {
-    "limit": "10"
+  "path": "/data/test-users",
+  "pathParameters": {
+    "table": "test-users"
   },
+  "queryStringParameters": null,
   "headers": {
     "Content-Type": "application/json"
   },
-  "body": "{\"msg\":\"Hello from the event.json body\"}"
+  "body": null
 }

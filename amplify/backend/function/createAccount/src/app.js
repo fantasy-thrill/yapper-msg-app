@@ -10,56 +10,94 @@ See the License for the specific language governing permissions and limitations 
 const express = require("express")
 const bodyParser = require("body-parser")
 const awsServerlessExpressMiddleware = require("aws-serverless-express/middleware")
-const { MongoClient } = require("mongodb")
-const cors = require("cors")
+const aws = require("aws-sdk")
+const { SSMClient, GetParametersCommand } = require("@aws-sdk/client-ssm")
 const bcrypt = require("bcrypt")
 const multer = require("multer")
+const multerS3 = require("multer-s3")
 const mailer = require("nodemailer")
-require("dotenv").config()
-
-const mongoURI = process.env.CONNECTION_STRING
-const dbName = process.env.DB_NAME
 
 // declare a new express app
 const app = express()
 app.use(bodyParser.json())
 app.use(awsServerlessExpressMiddleware.eventContext())
-app.use(cors())
 
 // Enable CORS for all methods
-// app.use(function(req, res, next) {
-//   res.header("Access-Control-Allow-Origin", "*")
-//   res.header("Access-Control-Allow-Headers", "*")
-//   next()
-// });
-
-const client = new MongoClient(mongoURI);
-client.connect()
-console.log("Connected to MongoDB Atlas")
-
-const db = client.db(dbName)
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/")
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname)
-  },
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*")
+  res.header("Access-Control-Allow-Headers", "*")
+  next()
 });
 
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024
+async function fetchSecrets() {
+  let secretsObj = {
+    serverEmail: "",
+    serverEmailPassword: ""
   }
+
+  const newClient = new SSMClient()
+
+  const command = new GetParametersCommand({
+    Names: [
+      "/amplify/d12tjfcvziujwh/dev/AMPLIFY_createAccount_SERVER_EMAIL", 
+      "/amplify/d12tjfcvziujwh/dev/AMPLIFY_createAccount_SERVER_EMAIL_PASSWORD"
+    ],
+    WithDecryption: true
+  })
+
+  try {
+    const response = await newClient.send(command)
+    console.log("Secrets retrieved successfully:", response.Parameters)
+    secretsObj.serverEmail = response.Parameters[0].Value
+    secretsObj.serverEmailPassword = response.Parameters[1].Value
+
+  } catch (error) {
+    console.error("Error retrieving secrets:", error)
+  }
+  
+  return secretsObj
+}
+
+const dynamodb = new aws.DynamoDB.DocumentClient()
+const s3 = new aws.S3()
+const secretValues = await fetchSecrets()
+
+async function getItemCount() {
+  const countRequest = {
+    TableName: "Users",
+    Select: "COUNT"
+  }
+
+  try {
+    const data = await dynamodb.scan(countRequest).promise()
+    console.log("Total number of users:", data.Count)
+    return data.Count
+
+  } catch (error) {
+    console.error("Error fetching count:", error)
+  }
+}
+
+const upload = multer({ 
+  storage: multerS3({
+    s3: s3,
+    bucket: "amplify-yappermsgapp-dev-5071b-deployment/user_uploads",
+    acl: "public-read",
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    metadata: function (req, file, cb) {
+      cb(null, { fieldName: file.fieldname })
+    },
+    key: function (req, file, cb) {
+      cb(null, Date.now().toString() + '-' + file.originalname)
+    }
+  })
 })
 
 const transporter = mailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.SERVER_EMAIL,
-    pass: process.env.SERVER_EMAIL_PASSWORD
+    user: secretValues.serverEmail,
+    pass: secretValues.serverEmailPassword
   },
   tls: {
     rejectUnauthorized: false
@@ -70,22 +108,26 @@ const transporter = mailer.createTransport({
 * Example post method *
 ****************************/
 
-app.post("/create-account", upload.single("profile_pic"), function(req, res) {
+app.post("/create-account", upload.single("profile_pic"), async function(req, res) {
   try {
       const { name, user_id, email, password } = req.body
-      const realUsers = db.collection(process.env.DB_USER_COLLECTION)
-      const hashedPassword = bcrypt.hash(password, 10)
+      const hashedPassword = await bcrypt.hash(password, 10)
+      const totalUsers = await getItemCount()
   
       const newUser = {
-        name: name,
-        uid: user_id,
-        email: email,
-        profilePicture: req.file.path,
-        password: hashedPassword
+        TableName: "Users",
+        Item: {
+          name: name,
+          ID: totalUsers + 1,
+          uid: user_id,
+          email: email,
+          profilePicture: req.file.path,
+          password: hashedPassword,
+        }
       }
   
       const mailOptions = {
-        from: process.env.SERVER_EMAIL,
+        from: secretValues.serverEmail,
         to: email,
         subject: "Account creation successful",
         html: `
@@ -95,13 +137,13 @@ app.post("/create-account", upload.single("profile_pic"), function(req, res) {
           <p style="white-space: pre-line">
             Dear ${name} (${user_id}),
         
-            Welcome to Yapper! We"re thrilled to have you join our community.
+            Welcome to Yapper! We're thrilled to have you join our community.
         
-            As a new member, you now have access to a world of possibilities for connecting with friends, family, and colleagues. Whether you"re looking to stay in touch with loved ones, collaborate with teammates, or meet new people, Yapper is here to make communication easy and enjoyable for you.
+            As a new member, you now have access to a world of possibilities for connecting with friends, family, and colleagues. Whether you're looking to stay in touch with loved ones, collaborate with teammates, or meet new people, Yapper is here to make communication easy and enjoyable for you.
         
-            We"re committed to providing you with the best messaging experience possible, and we"re continuously working to improve and enhance our app based on your feedback.
+            We're committed to providing you with the best messaging experience possible, and we're continuously working to improve and enhance our app based on your feedback.
         
-            If you have any questions, feedback, or suggestions, please don"t hesitate to reach out to us. We"re here to help and ensure that your experience with Yapper is seamless and enjoyable.
+            If you have any questions, feedback, or suggestions, please don't hesitate to reach out to us. We're here to help and ensure that your experience with Yapper is seamless and enjoyable.
         
             Once again, welcome to Yapper! We look forward to helping you stay connected with the people who matter most to you.
         
@@ -112,15 +154,14 @@ app.post("/create-account", upload.single("profile_pic"), function(req, res) {
         `
       }
   
-      const result = realUsers.insertOne(newUser)
-      const info = transporter.sendMail(mailOptions)
-      res.json(newUser)
+      await dynamodb.put(newUser).promise()
+      const info = await transporter.sendMail(mailOptions)
       console.log("User account created successfully!\n E-mail sent: ", info.response)
-      res.json({ success: "post call succeed!", url: req.url, body: req.body })
+      res.status(200).json({ message: "User account created successfully!" }) 
     
     } catch (error) {
       res.status(400).json({ message: "No account created" })
-      console.log(error)
+      console.log("No account created:", error)
     }
 });
 
