@@ -1,6 +1,6 @@
 import React from "react"
 import { useState, useRef } from "react"
-import chat from "../lib/chatdata.js"
+import chat from "../chatdata.js"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faFaceSmile } from "@fortawesome/free-solid-svg-icons"
 import "@cometchat/uikit-elements"

@@ -19,7 +19,7 @@
       "function": {
         "createAccount": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",
-          "s3Key": "amplify-builds/createAccount-4d30345970717557526b-build.zip",
+          "s3Key": "amplify-builds/createAccount-506c347679675972646f-build.zip",
           "secretsPathAmplifyAppId": "d12tjfcvziujwh"
         },
         "userLogin": {

@@ -1,11 +1,8 @@
 {
   "httpMethod": "POST",
-  "path": "/item",
-  "queryStringParameters": {
-    "limit": "10"
-  },
+  "path": "/create-account",
   "headers": {
     "Content-Type": "application/json"
   },
-  "body": "{\"msg\":\"Hello from the event.json body\"}"
+  "body": "{\"name\":\"Clark\", \"user_id\": \"manofsteel38\", \"email\": \"ryan1211@hotmail.com\", \"password\": \"psSZw$vxn5\"}"
 }

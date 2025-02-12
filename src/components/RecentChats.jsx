@@ -1,7 +1,7 @@
 import React from "react"
 import { Navigate, useNavigate } from "react-router-dom"
 import { useState, useEffect, useRef } from "react"
-import chat from "../lib/chatdata"
+import chat from "../chatdata"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
   faPenToSquare,

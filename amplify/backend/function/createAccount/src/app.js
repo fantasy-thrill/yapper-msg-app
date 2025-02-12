@@ -12,7 +12,8 @@ const bodyParser = require("body-parser")
 const awsServerlessExpressMiddleware = require("aws-serverless-express/middleware")
 const aws = require("aws-sdk")
 const { SSMClient, GetParametersCommand } = require("@aws-sdk/client-ssm")
-const bcrypt = require("bcrypt")
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3")
+const bcrypt = require("bcryptjs")
 const multer = require("multer")
 const multerS3 = require("multer-s3")
 const mailer = require("nodemailer")
@@ -47,7 +48,7 @@ async function fetchSecrets() {
 
   try {
     const response = await newClient.send(command)
-    console.log("Secrets retrieved successfully:", response.Parameters)
+    console.log("Secrets retrieved successfully")
     secretsObj.serverEmail = response.Parameters[0].Value
     secretsObj.serverEmailPassword = response.Parameters[1].Value
 
@@ -59,8 +60,7 @@ async function fetchSecrets() {
 }
 
 const dynamodb = new aws.DynamoDB.DocumentClient()
-const s3 = new aws.S3()
-const secretValues = await fetchSecrets()
+const s3 = new S3Client()
 
 async function getItemCount() {
   const countRequest = {
@@ -78,37 +78,31 @@ async function getItemCount() {
   }
 }
 
+const storage = multer.memoryStorage()
+
 const upload = multer({ 
-  storage: multerS3({
-    s3: s3,
-    bucket: "amplify-yappermsgapp-dev-5071b-deployment/user_uploads",
-    acl: "public-read",
-    contentType: multerS3.AUTO_CONTENT_TYPE,
-    metadata: function (req, file, cb) {
-      cb(null, { fieldName: file.fieldname })
-    },
-    key: function (req, file, cb) {
-      cb(null, Date.now().toString() + '-' + file.originalname)
-    }
-  })
+  storage: storage
 })
 
-const transporter = mailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: secretValues.serverEmail,
-    pass: secretValues.serverEmailPassword
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-})
 
 /****************************
 * Example post method *
 ****************************/
 
 app.post("/create-account", upload.single("profile_pic"), async function(req, res) {
+  const secretValues = await fetchSecrets()
+
+  const transporter = mailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: secretValues.serverEmail,
+      pass: secretValues.serverEmailPassword,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  })
+
   try {
       const { name, user_id, email, password } = req.body
       const hashedPassword = await bcrypt.hash(password, 10)
@@ -122,9 +116,19 @@ app.post("/create-account", upload.single("profile_pic"), async function(req, re
           uid: user_id,
           email: email,
           profilePicture: req.file.path,
-          password: hashedPassword,
+          password: hashedPassword
         }
       }
+
+      const uploadParams = {
+        Bucket: "amplify-yappermsgapp-dev-5071b-deployment",
+        Key: `user_uploads/${Date.now()}_${req.file.originalname}`,
+        Body: req.file.buffer, 
+        ContentType: req.file.mimetype 
+      };
+
+      const command = new PutObjectCommand(uploadParams);
+      await s3.send(command)
   
       const mailOptions = {
         from: secretValues.serverEmail,

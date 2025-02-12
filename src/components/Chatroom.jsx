@@ -1,7 +1,7 @@
 import React from "react"
 import { useState, useEffect, useMemo } from "react"
 import { Navigate, useNavigate, useLocation } from "react-router-dom"
-import chat from "../lib/chatdata.js"
+import chat from "../chatdata.js"
 import { testUserRegex } from "../smalleffects.js"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {

@@ -1,7 +1,7 @@
 import React from "react"
 import { useState } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
-import chat from "../lib/chatdata"
+import chat from "../chatdata"
 import logo from "../logo.svg"
 import { testUserRegex } from "../smalleffects"
 

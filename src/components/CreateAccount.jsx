@@ -1,7 +1,7 @@
 import React from "react"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import chat from "../lib/chatdata"
+import chat from "../chatdata"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faArrowLeft, faCheck, faXmark } from "@fortawesome/free-solid-svg-icons"
 
@@ -30,15 +30,16 @@ function CreateAccount() {
     try {
       const formData = new FormData(event.target)
       console.log(formData)
-      const response = await fetch("https://localhost:5174/create-account", { 
+      const response = await fetch("https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/create-account", { 
         method: "POST",
         body: formData
       })
       
       const result = await response.json()
       if (result) {
-        const { name, uid } = result
-        chat.createNewUser(name, uid)
+        console.log(result)
+        const { name, user_id } = result
+        chat.createNewUser(name, user_id)
         setSubmitted(true)
       }
     } catch (error) {
