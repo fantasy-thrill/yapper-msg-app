@@ -29,7 +29,6 @@ function CreateAccount() {
     event.preventDefault()
     try {
       const formData = new FormData(event.target)
-      console.log(formData)
       const response = await fetch("https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/create-account", { 
         method: "POST",
         body: formData
@@ -38,8 +37,8 @@ function CreateAccount() {
       const result = await response.json()
       if (result) {
         console.log(result)
-        const { name, user_id } = result
-        chat.createNewUser(name, user_id)
+        const { name, uid } = result.user
+        chat.createNewUser(name, uid)
         setSubmitted(true)
       }
     } catch (error) {

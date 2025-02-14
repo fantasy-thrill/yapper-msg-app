@@ -15,7 +15,6 @@ const { SSMClient, GetParametersCommand } = require("@aws-sdk/client-ssm")
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3")
 const bcrypt = require("bcryptjs")
 const multer = require("multer")
-const multerS3 = require("multer-s3")
 const mailer = require("nodemailer")
 
 // declare a new express app
@@ -96,11 +95,11 @@ app.post("/create-account", upload.single("profile_pic"), async function(req, re
     service: "gmail",
     auth: {
       user: secretValues.serverEmail,
-      pass: secretValues.serverEmailPassword,
+      pass: secretValues.serverEmailPassword
     },
     tls: {
-      rejectUnauthorized: false,
-    },
+      rejectUnauthorized: false
+    }
   })
 
   try {
@@ -115,7 +114,7 @@ app.post("/create-account", upload.single("profile_pic"), async function(req, re
           ID: totalUsers + 1,
           uid: user_id,
           email: email,
-          profilePicture: req.file.path,
+          profilePic: "",
           password: hashedPassword
         }
       }
@@ -124,11 +123,13 @@ app.post("/create-account", upload.single("profile_pic"), async function(req, re
         Bucket: "amplify-yappermsgapp-dev-5071b-deployment",
         Key: `user_uploads/${Date.now()}_${req.file.originalname}`,
         Body: req.file.buffer, 
-        ContentType: req.file.mimetype 
-      };
+        ContentType: req.file.mimetype,
+        ACL: "public-read"
+      }
 
       const command = new PutObjectCommand(uploadParams);
       await s3.send(command)
+      newUser.Item.profilePic = `https://${uploadParams.Bucket}.s3.us-east-2.amazonaws.com/${uploadParams.Key}`
   
       const mailOptions = {
         from: secretValues.serverEmail,
@@ -161,7 +162,10 @@ app.post("/create-account", upload.single("profile_pic"), async function(req, re
       await dynamodb.put(newUser).promise()
       const info = await transporter.sendMail(mailOptions)
       console.log("User account created successfully!\n E-mail sent: ", info.response)
-      res.status(200).json({ message: "User account created successfully!" }) 
+      res.status(200).json({ 
+        message: "User account created successfully!",
+        user: newUser.Item 
+      })
     
     } catch (error) {
       res.status(400).json({ message: "No account created" })
