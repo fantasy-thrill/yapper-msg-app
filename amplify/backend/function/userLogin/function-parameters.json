@@ -1,3 +1,7 @@
 {
-  "lambdaLayers": []
+  "lambdaLayers": [],
+  "secretNames": [
+    "APP_ID",
+    "API_KEY"
+  ]
 }

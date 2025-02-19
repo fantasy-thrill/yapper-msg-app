@@ -10,59 +10,116 @@ See the License for the specific language governing permissions and limitations 
 const express = require('express')
 const bodyParser = require('body-parser')
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware')
-const { MongoClient } = require("mongodb")
-const cors = require("cors")
-const bcrypt = require("bcrypt")
-require("dotenv").config()
-
-const mongoURI = process.env.CONNECTION_STRING
-const dbName = process.env.DB_NAME
+const aws = require("aws-sdk")
+const { SSMClient, GetParametersCommand } = require("@aws-sdk/client-ssm")
+const bcrypt = require("bcryptjs")
 
 // declare a new express app
 const app = express()
 app.use(bodyParser.json())
 app.use(awsServerlessExpressMiddleware.eventContext())
-app.use(cors())
 
 // Enable CORS for all methods
-// app.use(function(req, res, next) {
-//   res.header("Access-Control-Allow-Origin", "*")
-//   res.header("Access-Control-Allow-Headers", "*")
-//   next()
-// });
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*")
+  res.header("Access-Control-Allow-Headers", "*")
+  next()
+})
 
-const client = new MongoClient(mongoURI);
-client.connect()
-console.log("Connected to MongoDB Atlas")
+const dynamodb = new aws.DynamoDB.DocumentClient()
 
-const db = client.db(dbName)
+async function fetchSecrets() {
+  let secretsObj = {
+    appID: "",
+    apiKey: ""
+  }
+
+  const newClient = new SSMClient()
+  
+  const command = new GetParametersCommand({
+    Names: [
+      "/amplify/d12tjfcvziujwh/dev/AMPLIFY_userLogin_APP_ID", 
+      "/amplify/d12tjfcvziujwh/dev/AMPLIFY_userLogin_API_KEY"
+    ],
+    WithDecryption: true
+  })
+
+  try {
+    const response = await newClient.send(command)
+    console.log("Secrets retrieved successfully")
+    secretsObj.appID = response.Parameters[1].Value
+    secretsObj.apiKey = response.Parameters[0].Value
+
+  } catch (error) {
+    console.error("Error retrieving secrets:", error)
+  }
+  
+  return secretsObj
+}
+
+async function generateAuthToken(userID, appID, apiKey) {
+  const options = {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      apikey: apiKey
+    }
+  }
+
+  try {
+    const response = await fetch(
+      `https://${appID}.api-us.cometchat.io/v3/users/${userID}/auth_tokens`, 
+      options
+    )
+    const result = await response.json()
+    if (result) return result.data.authToken 
+
+  } catch (error) {
+    console.error("Could not generate token:", error)
+    return null
+  }
+}
 
 /****************************
 * Example post method *
 ****************************/
 
-app.post('/login', function(req, res) {
+app.post("/login", async function(req, res) {
   try {
     const { user_id, password } = req.body
-    const appUsers = db.collection(process.env.DB_USER_COLLECTION)
-    const matchedUser = appUsers.findOne({ uid: user_id })
+    const secrets = await fetchSecrets()
 
+    const params = {
+      TableName: "Users",
+      FilterExpression: "uid = :uid",
+      ExpressionAttributeValues: {
+        ":uid": user_id
+      }
+    }
+
+    const data = await dynamodb.scan(params).promise()
+    const matchedUser = data.Items[0]
     if (!matchedUser) return res.status(401).json({ error: "User not found" })
 
-    const passwordMatch = bcrypt.compare(password, matchedUser.password)
+    const passwordMatch = await bcrypt.compare(password, matchedUser.password)
     if (passwordMatch) {
       if (!matchedUser.authToken) {
-        const newToken = generateAuthToken(matchedUser.uid)
-        const updatedProp = {
-          $set: {
-            authToken: newToken,
+        const newToken = await generateAuthToken(matchedUser.uid, secrets.appID, secrets.apiKey)
+        const params = {
+          TableName: "Users",
+          Key: { ID: matchedUser.ID },
+          UpdateExpression: `SET authToken = :token`,
+          ExpressionAttributeValues: {
+            ":token": newToken
           },
+          ReturnValues: "UPDATED_NEW"
         }
-        const result = appUsers.updateOne({ uid: matchedUser.uid }, updatedProp)
+  
+        await dynamodb.update(params).promise()
         return res.status(200).json({ ...matchedUser, authToken: newToken })
       }
-      res.json({ success: "post call succeed!", url: req.url, body: req.body })
-      return res.status(200).json(matchedUser)
+      return res.status(200).json({ message: "Login successful", user: matchedUser })
     } else {
       return res.status(401).json({ error: "Invalid password" })
     }

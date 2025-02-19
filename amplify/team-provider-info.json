@@ -24,7 +24,8 @@
         },
         "userLogin": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",
-          "s3Key": "amplify-builds/userLogin-2f634f4a5a46447a7847-build.zip"
+          "s3Key": "amplify-builds/userLogin-2f634f4a5a46447a7847-build.zip",
+          "secretsPathAmplifyAppId": "d12tjfcvziujwh"
         },
         "recoverPassword": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",

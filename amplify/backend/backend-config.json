@@ -161,6 +161,14 @@
           "resourceName": "userLogin"
         }
       ]
+    },
+    "AMPLIFY_function_userLogin_secretsPathAmplifyAppId": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "userLogin"
+        }
+      ]
     }
   }
 }

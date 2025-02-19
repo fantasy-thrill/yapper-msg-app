@@ -1,11 +1,8 @@
 {
   "httpMethod": "POST",
-  "path": "/item",
-  "queryStringParameters": {
-    "limit": "10"
-  },
+  "path": "/login",
   "headers": {
     "Content-Type": "application/json"
   },
-  "body": "{\"msg\":\"Hello from the event.json body\"}"
+  "body": "{\"user_id\": \"man_of_steel38\", \"password\": \"psSZw$vxn5\"}"
 }
