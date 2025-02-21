@@ -1,11 +1,8 @@
 {
-  "httpMethod": "POST",
-  "path": "/item",
-  "queryStringParameters": {
-    "limit": "10"
-  },
+  "httpMethod": "PUT",
+  "path": "/update-password/man_of_steel38",
   "headers": {
     "Content-Type": "application/json"
   },
-  "body": "{\"msg\":\"Hello from the event.json body\"}"
+  "body": "{\"new_password\": \"D0Zn%Kq4SU\"}"
 }

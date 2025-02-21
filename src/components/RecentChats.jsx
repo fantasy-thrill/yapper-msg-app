@@ -2,6 +2,8 @@ import React from "react"
 import { Navigate, useNavigate } from "react-router-dom"
 import { useState, useEffect, useRef } from "react"
 import chat from "../chatdata"
+import "@cometchat/uikit-elements"
+import { AvatarStyle } from "@cometchat/uikit-elements"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
   faPenToSquare,
@@ -16,6 +18,7 @@ function RecentChats() {
   const [isAuthenticated, setIsAuthenticated] = useState(true)
   const [conversations, setConversations] = useState(undefined)
   const [deletedMessages, setDeletedMessages] = useState(undefined)
+  const [profilePic, setProfilePic] = useState(undefined)
 
   const navigate = useNavigate()
   const lastMessagePara = useRef(null)
@@ -152,21 +155,24 @@ function RecentChats() {
       async function fetchData() {
         try {
           const url = testUserRegex.test(user.uid) ? 
-            "https://localhost:5174/data/test" : 
-            "https://localhost:5174/data/users"
+            "https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/data/test-users" : 
+            "https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/data/users"
             
           const response = await fetch(url)
           const userInfo = await response.json()
           if (userInfo) {
-            const currentUser = userInfo.find(u => u.uid === user.uid)
-            if (currentUser) { 
+            const currentUser = userInfo.users.find(u => u.uid === user.uid)
+            if (currentUser) {
+              // console.log("User's profile pic:", currentUser.profilePic)
+              setProfilePic(currentUser.profilePic)
+              // console.log("Current pic:", profilePic)
               currentUser.deletedMsgs ? 
                 setDeletedMessages(currentUser.deletedMsgs) : 
                 setDeletedMessages([]) 
             }
           }
         } catch (error) {
-          console.error("Data not fetched: " + error)
+          console.error("Data not fetched\n", error)
         }
       }
       fetchData()
@@ -197,7 +203,7 @@ function RecentChats() {
     <div id="page">
       <div className="navigation-recent">
         <div className="userInfo">
-          <img src={user.avatar} alt="" style={{ width: "30px" }} />
+          <img src={profilePic} alt="" style={{ width: "2em" }} />
           <p style={userNameStyle}>{user.name}</p>
         </div>
         <button

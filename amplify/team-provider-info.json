@@ -19,17 +19,17 @@
       "function": {
         "createAccount": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",
-          "s3Key": "amplify-builds/createAccount-506c347679675972646f-build.zip",
+          "s3Key": "amplify-builds/createAccount-76736676683348364376-build.zip",
           "secretsPathAmplifyAppId": "d12tjfcvziujwh"
         },
         "userLogin": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",
-          "s3Key": "amplify-builds/userLogin-2f634f4a5a46447a7847-build.zip",
+          "s3Key": "amplify-builds/userLogin-4f4d30472f37556f7468-build.zip",
           "secretsPathAmplifyAppId": "d12tjfcvziujwh"
         },
         "recoverPassword": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",
-          "s3Key": "amplify-builds/recoverPassword-4c77516e515675614f59-build.zip"
+          "s3Key": "amplify-builds/recoverPassword-3368672f554c45597765-build.zip"
         },
         "fetchData": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",

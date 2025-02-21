@@ -139,7 +139,7 @@ app.post("/create-account", upload.single("profile_pic"), async function(req, re
         <div style="font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; margin-left: 2.5em; max-width: 1000px">
           <h1>Welcome to Yapper!</h1>
         
-          <p style="white-space: pre-line">
+          <p style="white-space: pre-wrap">
             Dear ${name} (${user_id}),
         
             Welcome to Yapper! We're thrilled to have you join our community.
@@ -161,7 +161,7 @@ app.post("/create-account", upload.single("profile_pic"), async function(req, re
   
       await dynamodb.put(newUser).promise()
       const info = await transporter.sendMail(mailOptions)
-      console.log("User account created successfully!\n E-mail sent: ", info.response)
+      console.log("User account created successfully!\nEmail sent:", info.response)
       res.status(200).json({ 
         message: "User account created successfully!",
         user: newUser.Item 

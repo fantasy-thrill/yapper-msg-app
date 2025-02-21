@@ -59,13 +59,22 @@ function Login() {
         const matchedUser = testUsers.find(user => user.uid === username)
         if (matchedUser) token = matchedUser.authToken
       } else {
-        const formData = new FormData(event.target)
-        const response = await fetch("https://localhost:5174/login", {
+        const response = await fetch("https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/login", {
           method: "POST",
-          body: formData,
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            user_id: username,
+            password: password
+          })
         })
-        const foundUser = await response.json()
-        if (foundUser) token = foundUser.authToken
+        
+        const data = await response.json()
+        if (data.user) {
+          const foundUser = data.user
+          token = foundUser.authToken
+        }
       }
 
       const user = await chat.login(token)
