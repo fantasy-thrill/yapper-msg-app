@@ -13,22 +13,27 @@ function ForgotPassword() {
 
   async function sendEmail(address) {
     try {
-      const response = await fetch("https://localhost:5174/data")
+      const response = await fetch("https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/data/users")
       const data = await response.json()
       if (data) {
         const matchedUser = data.find(user => user.email === address)
 
         if (matchedUser) {
-          let formData = new FormData()
-          formData.append("email", address)
-          const response = await fetch("https://localhost:5174/password-recovery", {
-            method: "POST",
-            body: formData
-          })
+          const response = await fetch(
+            "https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/password-recovery",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: address
+              })
+            }
+          )
 
-          if (response.status === 200) setEmailSent(true) 
+          if (response.status === 200) setEmailSent(true)
         }
       }
+      
     } catch (error) {
       console.error("Could not send e-mail: \n", error)
     }

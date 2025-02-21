@@ -1,8 +1,8 @@
 {
-  "httpMethod": "PUT",
-  "path": "/update-password/man_of_steel38",
+  "httpMethod": "POST",
+  "path": "/password-recovery",
   "headers": {
     "Content-Type": "application/json"
   },
-  "body": "{\"new_password\": \"D0Zn%Kq4SU\"}"
+  "body": "{\"email\": \"johnsmith123@example.com\"}"
 }

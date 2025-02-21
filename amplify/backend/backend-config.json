@@ -72,6 +72,11 @@
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     },
+    "dataHandler": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "fetchData": {
       "build": true,
       "dependsOn": [],
@@ -111,6 +116,22 @@
         {
           "category": "function",
           "resourceName": "createAccount"
+        }
+      ]
+    },
+    "AMPLIFY_function_dataHandler_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "dataHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_dataHandler_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "dataHandler"
         }
       ]
     },
