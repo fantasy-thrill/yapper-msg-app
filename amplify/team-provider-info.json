@@ -37,7 +37,7 @@
         },
         "dataHandler": {
           "deploymentBucketName": "amplify-yappermsgapp-dev-5071b-deployment",
-          "s3Key": "amplify-builds/dataHandler-463558426b6f64456b47-build.zip"
+          "s3Key": "amplify-builds/dataHandler-57424b6374636d633252-build.zip"
         }
       },
       "api": {

@@ -6,42 +6,42 @@ import { faArrowLeft } from "@fortawesome/free-solid-svg-icons"
 
 
 function ForgotPassword() {
-  const [emailInput, setEmailInput] = useState("")
+  const [userIDInput, setUserIDInput] = useState("")
   const [emailSent, setEmailSent] = useState(false)
 
   const navigate = useNavigate()
 
-  async function sendEmail(address) {
+  async function sendEmail(userID) {
     try {
-      const response = await fetch("https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/data/users")
+      const response = await fetch(
+        `https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/data/users/${userID}`
+      )
       const data = await response.json()
-      if (data) {
-        const matchedUser = data.find(user => user.email === address)
+      const matchedUser = data.item
 
-        if (matchedUser) {
-          const response = await fetch(
-            "https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/password-recovery",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: address
-              })
-            }
-          )
+      if (matchedUser) {
+        const response = await fetch(
+          "https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/password-recovery/",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: matchedUser.uid,
+              email: matchedUser.email
+            })
+          }
+        )
 
-          if (response.status === 200) setEmailSent(true)
-        }
+        if (response.status === 200) setEmailSent(true)
       }
-      
     } catch (error) {
-      console.error("Could not send e-mail: \n", error)
+      console.error("Could not send e-mail:\n", error)
     }
   }
   
   function handleSubmit(event) {
     event.preventDefault()
-    sendEmail(emailInput)
+    sendEmail(userIDInput)
   }
 
   return (
@@ -52,20 +52,20 @@ function ForgotPassword() {
       </div>
       <div>
         <h2>Forgot your password?</h2>
-        <p>Enter the e-mail address associated with your account below.</p>
-        <div id="email-input">
+        <p>Enter the username of your account below.</p>
+        <div id="user-id-input-section">
           <input
-            type="email"
-            name="email"
-            id="email-input"
-            onChange={e => setEmailInput(e.target.value)}
+            type="text"
+            name="user_id"
+            id="user-id-input"
+            onChange={e => setUserIDInput(e.target.value)}
             required
           />
           <button type="submit" onClick={e => handleSubmit(e)}>
             Submit
           </button>
           {emailSent ? (
-            <p>A link to reset your password has been sent to your e-mail.</p>
+            <p>A link to reset your password has been sent to the e-mail associated with your account.</p>
           ) : ""}
         </div>
       </div>

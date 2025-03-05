@@ -52,7 +52,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   row-gap: 1em;
-  max-width: 500px;
+  max-width: 525px;
   margin: 0 auto;
 }
 
@@ -112,13 +112,13 @@ form button {
   cursor: pointer;
 }
 
-#email-input input {
+#user-id-input-section input {
   font-size: 1em;
   width: 25em;
   margin-right: 1em;
   padding: 0.25em 0;
 }
-#email-input button {
+#user-id-input-section button {
   background-color: #187dbc;
   padding: 0.25em 0.75em;
   text-transform: uppercase;

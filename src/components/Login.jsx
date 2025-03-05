@@ -59,7 +59,7 @@ function Login() {
         const matchedUser = testUsers.find(user => user.uid === username)
         if (matchedUser) token = matchedUser.authToken
       } else {
-        const response = await fetch("https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/login", {
+        const response = await fetch("https://ngraqslff8.execute-api.us-east-2.amazonaws.com/dev/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -71,10 +71,7 @@ function Login() {
         })
         
         const data = await response.json()
-        if (data.user) {
-          const foundUser = data.user
-          token = foundUser.authToken
-        }
+        token = data.user.authToken
       }
 
       const user = await chat.login(token)

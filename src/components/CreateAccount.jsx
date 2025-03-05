@@ -29,7 +29,7 @@ function CreateAccount() {
     event.preventDefault()
     try {
       const formData = new FormData(event.target)
-      const response = await fetch("https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/create-account", { 
+      const response = await fetch("https://ngraqslff8.execute-api.us-east-2.amazonaws.com/dev/create-account", { 
         method: "POST",
         body: formData
       })

@@ -23,14 +23,14 @@ function ResetPassword() {
 
   async function resetUserPassword() {
     try {
-      const response = await fetch(`https://localhost:5174/update-password/${userID}`)
+      const response = await fetch(`https://ngraqslff8.execute-api.us-east-2.amazonaws.com/dev/update-password/${userID}`)
       if (response.status === 200) {
         setPasswordReset(true)
         console.log("Password update successful")
       }
       
     } catch (error) {
-      console.error("Password update not successful", error)
+      console.error("Password update not successful\n", error)
     }
   }
 
@@ -39,20 +39,20 @@ function ResetPassword() {
       const currentTimestamp = new Date().getTime()
        
       try {
-        const response = await fetch("https://localhost:5174/data/password-resets")
+        const response = await fetch(
+          "https://ngraqslff8.execute-api.us-east-2.amazonaws.com/dev/data/password-resets/" + recoveryCode 
+        )
         const data = await response.json()
-        if (data) {
-          const matchedRequest = data.find(req => req.code === recoveryCode)
-          
-          if (matchedRequest) {
-            const afterFifteenMins = currentTimestamp > matchedRequest.requestTime + 900000
-            if (!afterFifteenMins) setRequestValid(true)
-          }
-          setResolved(true)
+        const matchedRequest = data.item
+        
+        if (matchedRequest) {
+          const afterFifteenMins = currentTimestamp > matchedRequest.requestTime + 900000
+          if (!afterFifteenMins) setRequestValid(true)
         }
+        setResolved(true)
 
       } catch (error) {
-        console.error("Password reset requests not fetched", error)
+        console.error("Password reset requests not fetched\n", error)
       }
     }
     fetchData()

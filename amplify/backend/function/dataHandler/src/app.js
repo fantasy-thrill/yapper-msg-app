@@ -69,23 +69,6 @@ const dynamodb = new aws.DynamoDB.DocumentClient()
 const s3 = new S3Client()
 
 
-async function getItemCount() {
-  const countRequest = {
-    TableName: "Users",
-    Select: "COUNT"
-  }
-
-  try {
-    const data = await dynamodb.scan(countRequest).promise()
-    console.log("Total number of users:", data.Count)
-    return data.Count
-
-  } catch (error) {
-    console.error("Error fetching count:", error)
-  }
-}
-
-
 async function generateAuthToken(userID, appID, apiKey) {
   const options = {
     method: "POST",
@@ -135,13 +118,11 @@ app.post("/create-account", upload.single("profile_pic"), async function(req, re
   try {
       const { name, user_id, email, password } = req.body
       const hashedPassword = await bcrypt.hash(password, 10)
-      const totalUsers = await getItemCount()
   
       const newUser = {
         TableName: "Users",
         Item: {
           name: name,
-          ID: totalUsers + 1,
           uid: user_id,
           email: email,
           profilePic: "",
@@ -170,19 +151,19 @@ app.post("/create-account", upload.single("profile_pic"), async function(req, re
           <h1>Welcome to Yapper!</h1>
         
           <p style="white-space: pre-wrap">
-            Dear ${name} (${user_id}),
+            Dear ${name} (${user_id}),\n\n
         
-            Welcome to Yapper! We're thrilled to have you join our community.
+            Welcome to Yapper! We're thrilled to have you join our community.\n\n
         
-            As a new member, you now have access to a world of possibilities for connecting with friends, family, and colleagues. Whether you're looking to stay in touch with loved ones, collaborate with teammates, or meet new people, Yapper is here to make communication easy and enjoyable for you.
+            As a new member, you now have access to a world of possibilities for connecting with friends, family, and colleagues. Whether you're looking to stay in touch with loved ones, collaborate with teammates, or meet new people, Yapper is here to make communication easy and enjoyable for you.\n\n
         
-            We're committed to providing you with the best messaging experience possible, and we're continuously working to improve and enhance our app based on your feedback.
+            We're committed to providing you with the best messaging experience possible, and we're continuously working to improve and enhance our app based on your feedback.\n\n
         
-            If you have any questions, feedback, or suggestions, please don't hesitate to reach out to us. We're here to help and ensure that your experience with Yapper is seamless and enjoyable.
+            If you have any questions, feedback, or suggestions, please don't hesitate to reach out to us. We're here to help and ensure that your experience with Yapper is seamless and enjoyable.\n\n
         
-            Once again, welcome to Yapper! We look forward to helping you stay connected with the people who matter most to you.
+            Once again, welcome to Yapper! We look forward to helping you stay connected with the people who matter most to you.\n\n
         
-            Best regards,
+            Best regards,\n
             <b>Yapper Support Team</b>
           </p>
         </div>
@@ -192,14 +173,14 @@ app.post("/create-account", upload.single("profile_pic"), async function(req, re
       await dynamodb.put(newUser).promise()
       const info = await transporter.sendMail(mailOptions)
       console.log("User account created successfully!\nEmail sent:", info.response)
-      res.status(200).json({ 
+      return res.status(200).json({ 
         message: "User account created successfully!",
         user: newUser.Item 
       })
     
     } catch (error) {
-      res.status(400).json({ message: "No account created" })
       console.log("No account created:", error)
+      return res.status(400).json({ message: "No account created" })
     }
 })
 
@@ -211,14 +192,13 @@ app.post("/login", async function(req, res) {
 
     const params = {
       TableName: "Users",
-      FilterExpression: "uid = :uid",
-      ExpressionAttributeValues: {
-        ":uid": user_id
+      Key: {
+        uid: user_id
       }
     }
 
-    const data = await dynamodb.scan(params).promise()
-    const matchedUser = data.Items[0]
+    const data = await dynamodb.get(params).promise()
+    const matchedUser = data.Item
     if (!matchedUser) return res.status(401).json({ error: "User not found" })
 
     const passwordMatch = await bcrypt.compare(password, matchedUser.password)
@@ -227,7 +207,7 @@ app.post("/login", async function(req, res) {
         const newToken = await generateAuthToken(matchedUser.uid, secrets.appID, secrets.apiKey)
         const params = {
           TableName: "Users",
-          Key: { ID: matchedUser.ID },
+          Key: { uid: matchedUser.uid },
           UpdateExpression: `SET authToken = :token`,
           ExpressionAttributeValues: {
             ":token": newToken
@@ -236,7 +216,7 @@ app.post("/login", async function(req, res) {
         }
   
         await dynamodb.update(params).promise()
-        return res.status(200).json({ ...matchedUser, authToken: newToken })
+        return res.status(200).json({ message: "Login successful", user: { ...matchedUser, authToken: newToken } })
       }
       return res.status(200).json({ message: "Login successful", user: matchedUser })
     } else {
@@ -250,28 +230,15 @@ app.post("/login", async function(req, res) {
 
 
 app.post("/password-recovery", async function(req, res) {
-  const { email } = req.body
-  let userID;
+  const { user_id, email } = req.body
   const secrets = await fetchSecrets()
   
   try {
-    const params = {
-      TableName: "Users",
-      FilterExpression: "email = :email",
-      ExpressionAttributeValues: {
-        ":email": email
-      }
-    }
-
-    const data = await dynamodb.scan(params).promise()
-    const matchedUser = data.Items[0]
-    if (matchedUser) userID = matchedUser.uid
-
     const recoveryStatus = {
       TableName: "PasswordResetRequests",
       Item: {
         code: "",
-        requestedBy: userID,
+        requestedBy: user_id,
         requestTime: new Date().getTime()
       }
     }
@@ -288,8 +255,8 @@ app.post("/password-recovery", async function(req, res) {
         pass: secrets.serverEmailPassword,
       },
       tls: {
-        rejectUnauthorized: false,
-      },
+        rejectUnauthorized: false
+      }
     })
 
     const mailOptions = {
@@ -300,18 +267,18 @@ app.post("/password-recovery", async function(req, res) {
       <h1>Password Recovery</h1>
 
       <p>
-        Username: <b>${userID}</b>
+        Username: <b>${user_id}</b>
         <br>
         Please click the following link to reset your password.
       </p>
 
-      <a href="https://localhost:5173/reset-password/${userID}/${recoveryStatus.Item.code}">
-        https://localhost:5173/reset-password/${userID}/${recoveryStatus.Item.code}
+      <a href="https://localhost:5173/reset-password/${user_id}/${recoveryStatus.Item.code}">
+        https://localhost:5173/reset-password/${user_id}/${recoveryStatus.Item.code}
       </a>
-    `,
+    `
     }
 
-    const result = await dynamodb.put(recoveryStatus).promise()
+    await dynamodb.put(recoveryStatus).promise()
     const info = await transporter.sendMail(mailOptions)
     console.log("E-mail sent: ", info.response)
     return res.status(200).json({ message: "E-mail sent to recover password", info: info.response })
@@ -329,9 +296,8 @@ app.put("/update-password/:userID", async function(req, res) {
   try {
     const userParams = {
       TableName: "Users",
-      FilterExpression: "uid = :uid",
-      ExpressionAttributeValues: {
-        ":uid": req.params.userID
+      Key: {
+        uid: req.params.userID
       }
     }
 
@@ -343,8 +309,8 @@ app.put("/update-password/:userID", async function(req, res) {
       }
     }
 
-    const data = await dynamodb.scan(userParams).promise()
-    const matchedUser = data.Items[0]
+    const data = await dynamodb.get(userParams).promise()
+    const matchedUser = data.Item
     const newHashedPassword = await bcrypt.hash(new_password, 10)
 
     const requests = await dynamodb.scan(passwordParams).promise()
@@ -352,7 +318,7 @@ app.put("/update-password/:userID", async function(req, res) {
 
     const updateParams = {
       TableName: "Users",
-      Key: { ID: matchedUser.ID },
+      Key: { uid: matchedUser.uid },
       UpdateExpression: "SET password = :password",
       ExpressionAttributeValues: {
         ":password": newHashedPassword
@@ -368,7 +334,10 @@ app.put("/update-password/:userID", async function(req, res) {
     const firstResult = await dynamodb.update(updateParams).promise()
     await dynamodb.delete(deleteParams).promise()
     console.log("User password successfully changed")
-    return res.status(200).json({ message: "User password successfully changed", details: firstResult.Attributes })
+    return res.status(200).json({ 
+      message: "User password successfully changed", 
+      details: firstResult.Attributes 
+    })
     
   } catch (error) {
     console.log("User password could not be changed\n", error)
@@ -377,15 +346,22 @@ app.put("/update-password/:userID", async function(req, res) {
 })
 
 
-app.get("/data/:table", async function(req, res) {
+app.get("/data/:table/:key", async function(req, res) {
   let tables = {
     "users": "Users",
     "test-users": "TestUsers",
     "password-reset": "PasswordResetRequests"
   }
 
+  const enteredKey = req.params.table === "password-reset" ? {
+    code: req.params.key
+  } : {
+    uid: req.params.key
+  }
+
   const params = {
-    TableName: ""
+    TableName: "",
+    Key: enteredKey
   }
 
   for (const tableName in tables) {
@@ -393,15 +369,14 @@ app.get("/data/:table", async function(req, res) {
   }
 
   try {
-    const data = await dynamodb.scan(params).promise()
+    const data = await dynamodb.get(params).promise()
+    if (!data.Item) return res.status(400).json({ error: "User not found" })
 
-    console.log("Data retrieved successfully!\n", data.Items)
+    console.log("User data retrieved successfully!\n", data.Item)
     return res.status(200).json({
       statusCode: 200,
-      body: JSON.stringify({
-        message: "Items fetched successfully",
-        items: data.Items
-      })
+      message: "Item fetched successfully",
+      item: data.Item
     })
 
   } catch (error) {
@@ -412,7 +387,7 @@ app.get("/data/:table", async function(req, res) {
 
 
 app.listen(3000, function() {
-    console.log("App started")
+  console.log("App started")
 })
 
 // Export the app object. When executing the application local this does nothing. However,

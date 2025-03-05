@@ -155,13 +155,13 @@ function RecentChats() {
       async function fetchData() {
         try {
           const url = testUserRegex.test(user.uid) ? 
-            "https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/data/test-users" : 
-            "https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/data/users"
+            `https://ngraqslff8.execute-api.us-east-2.amazonaws.com/dev/data/test-users/${user.uid}` : 
+            `https://ngraqslff8.execute-api.us-east-2.amazonaws.com/dev/data/users/${user.uid}`
             
           const response = await fetch(url)
           const userInfo = await response.json()
           if (userInfo) {
-            const currentUser = userInfo.users.find(u => u.uid === user.uid)
+            const currentUser = userInfo.item
             if (currentUser) {
               // console.log("User's profile pic:", currentUser.profilePic)
               setProfilePic(currentUser.profilePic)

@@ -54,7 +54,7 @@ $white: #fff;
   display: grid;
   grid-template-columns: 1fr 1fr;
   row-gap: 1em;
-  max-width: 500px;
+  max-width: 525px;
   margin: 0 auto;
 }
 
@@ -114,7 +114,7 @@ form button {
   cursor: pointer;
 }
 
-#email-input {
+#user-id-input-section {
   input {
     font-size: 1em;
     width: 25em;
