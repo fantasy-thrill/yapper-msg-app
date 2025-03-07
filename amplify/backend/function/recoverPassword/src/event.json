@@ -1,8 +1,0 @@
-{
-  "httpMethod": "POST",
-  "path": "/password-recovery",
-  "headers": {
-    "Content-Type": "application/json"
-  },
-  "body": "{\"email\": \"johnsmith123@example.com\"}"
-}

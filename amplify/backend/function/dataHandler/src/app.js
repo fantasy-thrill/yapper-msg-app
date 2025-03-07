@@ -385,6 +385,44 @@ app.get("/data/:table/:key", async function(req, res) {
   }
 })
 
+app.put("/update-delete-list/:uid/:msgids", async (req, res) => {
+  try {
+    const userParams = {
+      TableName: /superhero[1-5]/.test(req.params.uid) ? "TestUsers" : "Users",
+      Key: {
+        uid: req.params.uid
+      }
+    }
+
+    const data = await dynamodb.get(userParams).promise()
+    const matchedUser = data.Item
+    const msgidArr = req.params.msgids.split(",")
+
+    const updateParams = {
+      TableName: /superhero[1-5]/.test(req.params.uid) ? "TestUsers" : "Users",
+      Key: { uid: req.params.uid },
+      UpdateExpression: "SET deletedMsgs = :deletedMsgs",
+      ExpressionAttributeValues: {
+        ":deletedMsgs": [...matchedUser.deletedMsgs, ...msgidArr]
+      },
+      ReturnValues: "UPDATED_NEW"
+    }
+
+    const result = await dynamodb.update(updateParams).promise()
+    return res.status(200).json({
+      message: "User's deleted messages have been updated",
+      result: result.Attributes
+    })
+
+  } catch (error) {
+    console.error("Could not update deleted messages:\n", error)
+    return res.status(500).json({
+      message: "Could not update deleted messages",
+      error: error
+    })
+  }
+})
+
 
 app.listen(3000, function() {
   console.log("App started")

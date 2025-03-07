@@ -1,8 +1,0 @@
-{
-  "httpMethod": "POST",
-  "path": "/login",
-  "headers": {
-    "Content-Type": "application/json"
-  },
-  "body": "{\"user_id\": \"man_of_steel38\", \"password\": \"psSZw$vxn5\"}"
-}

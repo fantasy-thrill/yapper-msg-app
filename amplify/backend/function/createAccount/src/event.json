@@ -1,8 +1,0 @@
-{
-  "httpMethod": "POST",
-  "path": "/create-account",
-  "headers": {
-    "Content-Type": "application/json"
-  },
-  "body": "{\"name\":\"Clark\", \"user_id\": \"manofsteel38\", \"email\": \"ryan1211@hotmail.com\", \"password\": \"psSZw$vxn5\"}"
-}

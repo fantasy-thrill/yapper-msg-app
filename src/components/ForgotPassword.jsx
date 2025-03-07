@@ -14,14 +14,14 @@ function ForgotPassword() {
   async function sendEmail(userID) {
     try {
       const response = await fetch(
-        `https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/data/users/${userID}`
+        `https://ngraqslff8.execute-api.us-east-2.amazonaws.com/dev/data/users/${userID}`
       )
       const data = await response.json()
       const matchedUser = data.item
 
       if (matchedUser) {
         const response = await fetch(
-          "https://fe4yhu7nf6.execute-api.us-east-2.amazonaws.com/dev/password-recovery/",
+          "https://ngraqslff8.execute-api.us-east-2.amazonaws.com/dev/password-recovery/",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
