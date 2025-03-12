@@ -17,36 +17,35 @@ function Login() {
 
   const navigate = useNavigate()
 
-  async function fetchData() {
+  async function fetchTestUserData() {
     try {
-      const response = await fetch("https://localhost:5174/data/test")
+      const response = await fetch(
+        "https://ngraqslff8.execute-api.us-east-2.amazonaws.com/dev/data/test-users/" + username
+      )
       const data = await response.json()
       if (data) {
         console.log("Information retrieved successfully")
-        return data
+        return data.item
       }
     } catch (error) {
-      console.error("User information not fetched: ", error)
+      console.error("User information not fetched:\n", error)
       return null
     }
   }
+
 
   function onSubmit(e) {
     e.preventDefault()
 
     if (developerLogin) {
-      if (
-        testUserRegex.test(username) &&
-        authKey === import.meta.env.VITE_AUTH_KEY
-      ) {
-        login(e)
-      } else {
-        setErrorMessage("Invalid test user credentials")
-      }
+      if (testUserRegex.test(username) && authKey === import.meta.env.VITE_AUTH_KEY) login(e)
+      else setErrorMessage("Invalid test user credentials")
+
     } else {
       login(e)
     }
   }
+
 
   async function login(event) {
     toggleIsSubmitting()
@@ -55,9 +54,9 @@ function Login() {
       let token = ""
 
       if (developerLogin) {
-        const testUsers = await fetchData()
-        const matchedUser = testUsers.find(user => user.uid === username)
+        const matchedUser = await fetchTestUserData()
         if (matchedUser) token = matchedUser.authToken
+        
       } else {
         const response = await fetch("https://ngraqslff8.execute-api.us-east-2.amazonaws.com/dev/login", {
           method: "POST",
@@ -89,9 +88,11 @@ function Login() {
     }
   }
 
+
   function toggleIsSubmitting() {
     setIsSubmitting(prevState => !prevState)
   }
+
 
   if (isAuthenticated) {
     return (
@@ -104,6 +105,7 @@ function Login() {
       />
     )
   }
+  
 
   return (
     <div className="App" style={{ height: "75vh" }}>
@@ -177,10 +179,7 @@ function Login() {
           </span>
           <span
             className="other-cases"
-            onClick={() => {
-              setDeveloperLogin(true)
-              fetchData()
-            }}>
+            onClick={() => setDeveloperLogin(true)}>
             Login with a test user (developers only)
           </span>
         </>
